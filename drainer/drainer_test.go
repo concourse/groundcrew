@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
+	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
 	. "github.com/concourse/groundcrew/drainer"
 	"github.com/concourse/groundcrew/drainer/drainerfakes"
@@ -70,7 +71,7 @@ var _ = Describe("Drainer", func() {
 		Context("if watched process is still running", func() {
 			BeforeEach(func() {
 				callCount := 0
-				fakeWatchProcess.IsRunningStub = func() (bool, error) {
+				fakeWatchProcess.IsRunningStub = func(lager.Logger) (bool, error) {
 					callCount++
 					if callCount > 5 {
 						return false, nil
@@ -86,6 +87,7 @@ var _ = Describe("Drainer", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(5))
+				Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(0))
 			})
 		})
 	})
@@ -130,7 +132,7 @@ var _ = Describe("Drainer", func() {
 		Context("if watched process is still running", func() {
 			BeforeEach(func() {
 				callCount := 0
-				fakeWatchProcess.IsRunningStub = func() (bool, error) {
+				fakeWatchProcess.IsRunningStub = func(lager.Logger) (bool, error) {
 					callCount++
 					if callCount > 5 {
 						return false, nil
@@ -146,6 +148,7 @@ var _ = Describe("Drainer", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(5))
+				Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(0))
 			})
 		})
 	})

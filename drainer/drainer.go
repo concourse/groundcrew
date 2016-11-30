@@ -18,13 +18,14 @@ type Drainer struct {
 
 func (d *Drainer) Drain(logger lager.Logger) error {
 	for {
-		processIsRunning, err := d.WatchProcess.IsRunning()
+		processIsRunning, err := d.WatchProcess.IsRunning(logger)
 		if err != nil {
 			logger.Error("failed-to-check-if-process-is-running", err)
 			return err
 		}
 
 		if !processIsRunning {
+			logger.Debug("Watched process is not running, exiting.")
 			return nil
 		}
 
@@ -33,11 +34,11 @@ func (d *Drainer) Drain(logger lager.Logger) error {
 			if err != nil {
 				logger.Error("failed-to-retire-worker", err)
 			}
-		}
-
-		err = d.SSHRunner.LandWorker(logger)
-		if err != nil {
-			logger.Error("failed-to-land-worker", err)
+		} else {
+			err = d.SSHRunner.LandWorker(logger)
+			if err != nil {
+				logger.Error("failed-to-land-worker", err)
+			}
 		}
 
 		d.Clock.Sleep(d.WaitInterval)

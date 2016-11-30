@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
+
+	"code.cloudfoundry.org/lager"
 )
 
 //go:generate counterfeiter . WatchProcess
 
 type WatchProcess interface {
-	IsRunning() (bool, error)
+	IsRunning(lager.Logger) (bool, error)
 }
 
 type beaconWatchProcess struct {
@@ -22,13 +25,15 @@ func NewBeaconWatchProcess(pidFile string) WatchProcess {
 	}
 }
 
-func (p *beaconWatchProcess) IsRunning() (bool, error) {
+func (p *beaconWatchProcess) IsRunning(logger lager.Logger) (bool, error) {
 	_, err := os.Stat(p.pidFile)
 	if err != nil {
 		if os.IsNotExist(err) {
+			logger.Debug("Beacon pid file does not exist.", lager.Data{"pidfile": p.pidFile})
 			return false, nil
 		}
 
+		logger.Error("failed-to-check-if-pid-file-exists", err)
 		return false, err
 	}
 
@@ -37,14 +42,19 @@ func (p *beaconWatchProcess) IsRunning() (bool, error) {
 		return false, err
 	}
 
-	_, err = os.Stat(fmt.Sprintf("/proc/%s", string(pidContents)))
+	beaconPid := strings.TrimSpace(string(pidContents))
+
+	_, err = os.Stat(fmt.Sprintf("/proc/%s", beaconPid))
 	if err != nil {
 		if os.IsNotExist(err) {
+			logger.Debug("Beacon process does not exist.", lager.Data{"pid": beaconPid})
 			return false, nil
 		}
 
+		logger.Error("failed-to-check-if-process-exists.", err)
 		return false, err
 	}
 
+	logger.Debug("Beacon process is still runnning.", lager.Data{"pid": beaconPid})
 	return true, nil
 }

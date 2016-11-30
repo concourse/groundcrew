@@ -4,14 +4,17 @@ package drainerfakes
 import (
 	"sync"
 
+	"code.cloudfoundry.org/lager"
 	"github.com/concourse/groundcrew/drainer"
 )
 
 type FakeWatchProcess struct {
-	IsRunningStub        func() (bool, error)
+	IsRunningStub        func(lager.Logger) (bool, error)
 	isRunningMutex       sync.RWMutex
-	isRunningArgsForCall []struct{}
-	isRunningReturns     struct {
+	isRunningArgsForCall []struct {
+		arg1 lager.Logger
+	}
+	isRunningReturns struct {
 		result1 bool
 		result2 error
 	}
@@ -19,13 +22,15 @@ type FakeWatchProcess struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeWatchProcess) IsRunning() (bool, error) {
+func (fake *FakeWatchProcess) IsRunning(arg1 lager.Logger) (bool, error) {
 	fake.isRunningMutex.Lock()
-	fake.isRunningArgsForCall = append(fake.isRunningArgsForCall, struct{}{})
-	fake.recordInvocation("IsRunning", []interface{}{})
+	fake.isRunningArgsForCall = append(fake.isRunningArgsForCall, struct {
+		arg1 lager.Logger
+	}{arg1})
+	fake.recordInvocation("IsRunning", []interface{}{arg1})
 	fake.isRunningMutex.Unlock()
 	if fake.IsRunningStub != nil {
-		return fake.IsRunningStub()
+		return fake.IsRunningStub(arg1)
 	} else {
 		return fake.isRunningReturns.result1, fake.isRunningReturns.result2
 	}
@@ -35,6 +40,12 @@ func (fake *FakeWatchProcess) IsRunningCallCount() int {
 	fake.isRunningMutex.RLock()
 	defer fake.isRunningMutex.RUnlock()
 	return len(fake.isRunningArgsForCall)
+}
+
+func (fake *FakeWatchProcess) IsRunningArgsForCall(i int) lager.Logger {
+	fake.isRunningMutex.RLock()
+	defer fake.isRunningMutex.RUnlock()
+	return fake.isRunningArgsForCall[i].arg1
 }
 
 func (fake *FakeWatchProcess) IsRunningReturns(result1 bool, result2 error) {

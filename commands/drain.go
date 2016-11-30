@@ -7,6 +7,7 @@ import (
 	"github.com/concourse/groundcrew/drainer"
 	"github.com/concourse/groundcrew/ssh"
 
+	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 )
 
@@ -25,9 +26,11 @@ func (cmd *DrainCommand) Execute(args []string) error {
 
 	logger = logger.Session("drain")
 
+	logger.Debug("running-drain", lager.Data{"shutdown": cmd.IsShutdown})
+
 	sshRunner := ssh.NewRunner(
 		ssh.Options{
-			Addr:                cmd.TSAAddrs,
+			Addrs:               cmd.TSAAddrs,
 			PrivateKeyFile:      cmd.TSASSHKeyFile,
 			UserKnownHostsFile:  cmd.UserKnownHostsFile,
 			ConnectTimeout:      30,
@@ -40,8 +43,9 @@ func (cmd *DrainCommand) Execute(args []string) error {
 	drainer := &drainer.Drainer{
 		SSHRunner:    sshRunner,
 		IsShutdown:   cmd.IsShutdown,
-		WatchProcess: NewBeaconWatchProcess(cmd.BeaconPidFile),
+		WatchProcess: drainer.NewBeaconWatchProcess(cmd.BeaconPidFile),
 		WaitInterval: 15 * time.Second,
+		Clock:        clock.NewClock(),
 	}
 
 	return drainer.Drain(logger)
