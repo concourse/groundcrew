@@ -25,6 +25,14 @@ type FakeRunner struct {
 	landWorkerReturns struct {
 		result1 error
 	}
+	DeleteWorkerStub        func(logger lager.Logger) error
+	deleteWorkerMutex       sync.RWMutex
+	deleteWorkerArgsForCall []struct {
+		logger lager.Logger
+	}
+	deleteWorkerReturns struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -95,6 +103,39 @@ func (fake *FakeRunner) LandWorkerReturns(result1 error) {
 	}{result1}
 }
 
+func (fake *FakeRunner) DeleteWorker(logger lager.Logger) error {
+	fake.deleteWorkerMutex.Lock()
+	fake.deleteWorkerArgsForCall = append(fake.deleteWorkerArgsForCall, struct {
+		logger lager.Logger
+	}{logger})
+	fake.recordInvocation("DeleteWorker", []interface{}{logger})
+	fake.deleteWorkerMutex.Unlock()
+	if fake.DeleteWorkerStub != nil {
+		return fake.DeleteWorkerStub(logger)
+	} else {
+		return fake.deleteWorkerReturns.result1
+	}
+}
+
+func (fake *FakeRunner) DeleteWorkerCallCount() int {
+	fake.deleteWorkerMutex.RLock()
+	defer fake.deleteWorkerMutex.RUnlock()
+	return len(fake.deleteWorkerArgsForCall)
+}
+
+func (fake *FakeRunner) DeleteWorkerArgsForCall(i int) lager.Logger {
+	fake.deleteWorkerMutex.RLock()
+	defer fake.deleteWorkerMutex.RUnlock()
+	return fake.deleteWorkerArgsForCall[i].logger
+}
+
+func (fake *FakeRunner) DeleteWorkerReturns(result1 error) {
+	fake.DeleteWorkerStub = nil
+	fake.deleteWorkerReturns = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeRunner) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -102,6 +143,8 @@ func (fake *FakeRunner) Invocations() map[string][][]interface{} {
 	defer fake.retireWorkerMutex.RUnlock()
 	fake.landWorkerMutex.RLock()
 	defer fake.landWorkerMutex.RUnlock()
+	fake.deleteWorkerMutex.RLock()
+	defer fake.deleteWorkerMutex.RUnlock()
 	return fake.invocations
 }
 

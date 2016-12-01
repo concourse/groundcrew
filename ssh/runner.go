@@ -24,6 +24,7 @@ func (lw *LogWriter) Write(p []byte) (n int, err error) {
 type Runner interface {
 	RetireWorker(logger lager.Logger) error
 	LandWorker(logger lager.Logger) error
+	DeleteWorker(logger lager.Logger) error
 }
 
 type runner struct {
@@ -52,6 +53,10 @@ func (r *runner) RetireWorker(logger lager.Logger) error {
 
 func (r *runner) LandWorker(logger lager.Logger) error {
 	return r.run(logger, "land-worker")
+}
+
+func (r *runner) DeleteWorker(logger lager.Logger) error {
+	return r.run(logger, "delete-worker")
 }
 
 func (r *runner) run(logger lager.Logger, commandName string) error {

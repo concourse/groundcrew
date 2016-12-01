@@ -12,12 +12,13 @@ import (
 )
 
 type DrainCommand struct {
-	WorkerConfigFile   string   `long:"worker-config-file" description:"Path to worker config file."`
-	UserKnownHostsFile string   `long:"user-known-hosts-file" description:"Path to user known hosts file."`
-	TSASSHKeyFile      string   `long:"tsa-ssh-key" description:"Path to TSA SSH key."`
-	BeaconPidFile      string   `long:"beacon-pid-file" description:"Path to beacon pid file."`
-	TSAAddrs           []string `long:"tsa-addr" description:"Address of a TSA host." value-name:"127.0.0.1:2222"`
-	IsShutdown         bool     `long:"shutdown" description:"Whether worker is about to shutdown."`
+	WorkerConfigFile   string         `long:"worker-config-file" description:"Path to worker config file."`
+	UserKnownHostsFile string         `long:"user-known-hosts-file" description:"Path to user known hosts file."`
+	TSASSHKeyFile      string         `long:"tsa-ssh-key" description:"Path to TSA SSH key."`
+	BeaconPidFile      string         `long:"beacon-pid-file" description:"Path to beacon pid file."`
+	TSAAddrs           []string       `long:"tsa-addr" description:"Address of a TSA host." value-name:"127.0.0.1:2222"`
+	IsShutdown         bool           `long:"shutdown" description:"Whether worker is about to shutdown."`
+	Timeout            *time.Duration `long:"timeout" description:"Maximum time to wait for draining to finish."`
 }
 
 func (cmd *DrainCommand) Execute(args []string) error {
@@ -46,6 +47,7 @@ func (cmd *DrainCommand) Execute(args []string) error {
 		WatchProcess: drainer.NewBeaconWatchProcess(cmd.BeaconPidFile),
 		WaitInterval: 15 * time.Second,
 		Clock:        clock.NewClock(),
+		Timeout:      cmd.Timeout,
 	}
 
 	return drainer.Drain(logger)

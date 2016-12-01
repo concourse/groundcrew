@@ -89,6 +89,22 @@ var _ = Describe("Drainer", func() {
 				Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(5))
 				Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(0))
 			})
+
+			Context("when drain timeout is specified", func() {
+				BeforeEach(func() {
+					timeoutInterval := 3 * waitInterval
+					drainer.Timeout = &timeoutInterval
+				})
+
+				It("exits after timeout and deletes the worker forcibly", func() {
+					err := drainer.Drain(logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(3))
+					Expect(fakeSSHRunner.DeleteWorkerCallCount()).To(Equal(1))
+					Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(0))
+				})
+			})
 		})
 	})
 
@@ -149,6 +165,22 @@ var _ = Describe("Drainer", func() {
 
 				Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(5))
 				Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(0))
+			})
+
+			Context("when drain timeout is specified", func() {
+				BeforeEach(func() {
+					timeoutInterval := 3 * waitInterval
+					drainer.Timeout = &timeoutInterval
+				})
+
+				It("exits after timeout", func() {
+					err := drainer.Drain(logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(3))
+					Expect(fakeSSHRunner.DeleteWorkerCallCount()).To(Equal(0))
+					Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(0))
+				})
 			})
 		})
 	})
