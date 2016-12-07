@@ -29,7 +29,7 @@ func (p *beaconWatchProcess) IsRunning(logger lager.Logger) (bool, error) {
 	_, err := os.Stat(p.pidFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			logger.Debug("Beacon pid file does not exist.", lager.Data{"pidfile": p.pidFile})
+			logger.Debug("beacon-pid-file-does-not-exist", lager.Data{"pidfile": p.pidFile})
 			return false, nil
 		}
 
@@ -47,7 +47,7 @@ func (p *beaconWatchProcess) IsRunning(logger lager.Logger) (bool, error) {
 	_, err = os.Stat(fmt.Sprintf("/proc/%s", beaconPid))
 	if err != nil {
 		if os.IsNotExist(err) {
-			logger.Debug("Beacon process does not exist.", lager.Data{"pid": beaconPid})
+			logger.Debug("beacon-process-does-not-exist", lager.Data{"pid": beaconPid})
 			return false, nil
 		}
 
@@ -55,6 +55,6 @@ func (p *beaconWatchProcess) IsRunning(logger lager.Logger) (bool, error) {
 		return false, err
 	}
 
-	logger.Debug("Beacon process is still runnning.", lager.Data{"pid": beaconPid})
+	logger.Debug("beacon-process-is-still-running", lager.Data{"pid": beaconPid})
 	return true, nil
 }

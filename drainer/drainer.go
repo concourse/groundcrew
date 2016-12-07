@@ -31,12 +31,12 @@ func (d *Drainer) Drain(logger lager.Logger) error {
 		}
 
 		if !processIsRunning {
-			logger.Debug("Watched process is not running, exiting.")
+			logger.Debug("process-is-not-running-exiting")
 			return nil
 		}
 
 		if d.Timeout != nil && d.Clock.Now().After(tryUntil) {
-			logger.Debug("Drain timeout passed, exiting.")
+			logger.Debug("drain-timeout-passed-exiting")
 
 			if d.IsShutdown {
 				err := d.SSHRunner.DeleteWorker(logger)

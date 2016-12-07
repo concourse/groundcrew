@@ -91,6 +91,6 @@ func (r *runner) run(logger lager.Logger, commandName string) error {
 		logger.Error("failed-to-run-ssh-command", err, lager.Data{"tsa-addr": addr})
 	}
 
-	logger.Debug("Failed to reach any TSA, assuming cluster is being destroyed.")
+	logger.Debug("failed-to-reach-any-tsa-assuming-cluster-is-being-destroyed")
 	return nil
 }
