@@ -9,6 +9,7 @@ import (
 	"code.cloudfoundry.org/lager/lagertest"
 	. "github.com/concourse/groundcrew/drainer"
 	"github.com/concourse/groundcrew/drainer/drainerfakes"
+	"github.com/concourse/groundcrew/ssh"
 	"github.com/concourse/groundcrew/ssh/sshfakes"
 
 	. "github.com/onsi/ginkgo"
@@ -90,6 +91,36 @@ var _ = Describe("Drainer", func() {
 				Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(0))
 			})
 
+			Context("when retiring worker fails", func() {
+				var disaster = errors.New("disaster")
+
+				BeforeEach(func() {
+					fakeSSHRunner.RetireWorkerReturns(disaster)
+				})
+
+				It("does not return an error and keeps retrying", func() {
+					err := drainer.Drain(logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(5))
+					Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(0))
+				})
+			})
+
+			Context("when retiring worker fails to reach any tsa", func() {
+				BeforeEach(func() {
+					fakeSSHRunner.RetireWorkerReturns(ssh.ErrFailedToReachAnyTSA)
+				})
+
+				It("does not return an error and stops retrying", func() {
+					err := drainer.Drain(logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(1))
+					Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(0))
+				})
+			})
+
 			Context("when drain timeout is specified", func() {
 				BeforeEach(func() {
 					timeoutInterval := 3 * waitInterval
@@ -103,6 +134,31 @@ var _ = Describe("Drainer", func() {
 					Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(3))
 					Expect(fakeSSHRunner.DeleteWorkerCallCount()).To(Equal(1))
 					Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(0))
+				})
+
+				Context("when deleting worker fails", func() {
+					var disaster = errors.New("disaster")
+
+					BeforeEach(func() {
+						fakeSSHRunner.DeleteWorkerReturns(disaster)
+					})
+
+					It("returns an error", func() {
+						err := drainer.Drain(logger)
+						Expect(err).To(HaveOccurred())
+						Expect(err).To(Equal(disaster))
+					})
+				})
+
+				Context("when deleting worker fails to reach any tsa", func() {
+					BeforeEach(func() {
+						fakeSSHRunner.DeleteWorkerReturns(ssh.ErrFailedToReachAnyTSA)
+					})
+
+					It("does not return an error", func() {
+						err := drainer.Drain(logger)
+						Expect(err).NotTo(HaveOccurred())
+					})
 				})
 			})
 		})
@@ -165,6 +221,36 @@ var _ = Describe("Drainer", func() {
 
 				Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(5))
 				Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(0))
+			})
+
+			Context("when landing worker fails", func() {
+				var disaster = errors.New("disaster")
+
+				BeforeEach(func() {
+					fakeSSHRunner.LandWorkerReturns(disaster)
+				})
+
+				It("does not return an error and keeps retrying", func() {
+					err := drainer.Drain(logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(5))
+					Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(0))
+				})
+			})
+
+			Context("when landing worker fails to reach any tsa", func() {
+				BeforeEach(func() {
+					fakeSSHRunner.LandWorkerReturns(ssh.ErrFailedToReachAnyTSA)
+				})
+
+				It("does not return an error and stops retrying", func() {
+					err := drainer.Drain(logger)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeSSHRunner.LandWorkerCallCount()).To(Equal(1))
+					Expect(fakeSSHRunner.RetireWorkerCallCount()).To(Equal(0))
+				})
 			})
 
 			Context("when drain timeout is specified", func() {

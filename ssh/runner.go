@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,6 +10,8 @@ import (
 
 	"code.cloudfoundry.org/lager"
 )
+
+var ErrFailedToReachAnyTSA = errors.New("failed-to-reach-any-tsa-assuming-cluster-is-being-destroyed")
 
 type LogWriter struct {
 	logger lager.Logger
@@ -91,6 +94,5 @@ func (r *runner) run(logger lager.Logger, commandName string) error {
 		logger.Error("failed-to-run-ssh-command", err, lager.Data{"tsa-addr": addr})
 	}
 
-	logger.Debug("failed-to-reach-any-tsa-assuming-cluster-is-being-destroyed")
-	return nil
+	return ErrFailedToReachAnyTSA
 }

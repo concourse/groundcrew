@@ -41,6 +41,11 @@ func (d *Drainer) Drain(logger lager.Logger) error {
 			if d.IsShutdown {
 				err := d.SSHRunner.DeleteWorker(logger)
 				if err != nil {
+					if err == ssh.ErrFailedToReachAnyTSA {
+						logger.Debug(err.Error())
+						return nil
+					}
+
 					logger.Error("failed-to-delete-worker", err)
 					return err
 				}
@@ -52,11 +57,21 @@ func (d *Drainer) Drain(logger lager.Logger) error {
 		if d.IsShutdown {
 			err := d.SSHRunner.RetireWorker(logger)
 			if err != nil {
+				if err == ssh.ErrFailedToReachAnyTSA {
+					logger.Debug(err.Error())
+					return nil
+				}
+
 				logger.Error("failed-to-retire-worker", err)
 			}
 		} else {
 			err = d.SSHRunner.LandWorker(logger)
 			if err != nil {
+				if err == ssh.ErrFailedToReachAnyTSA {
+					logger.Debug(err.Error())
+					return nil
+				}
+
 				logger.Error("failed-to-land-worker", err)
 			}
 		}
